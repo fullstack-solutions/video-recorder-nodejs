@@ -1,0 +1,94 @@
+body{
+    background: #007092;
+}
+
+
+#mediaContainerDiv{
+
+  margin-top: 80px;
+
+}
+
+.startrecordBtn
+{
+
+border: 0;
+background: transparent;
+box-sizing: border-box;
+width: 0;
+height: 14px;
+
+border-color: transparent transparent transparent #202020;
+transition: 100ms all ease;
+cursor: pointer;
+float: right;
+border-style: solid;
+border-width: 14px 0 14px 18px;
+}
+
+.stoprecordBtn
+{
+  width: 14px;
+  height: 14px;
+  border-style: solid;
+  border-width: 14px 14px 14px 14px;
+  border-color: #202020;
+  float: right;
+}
+
+#State
+{
+float: right;
+margin-right: 10px;
+font-size: 24px
+}
+
+.container{
+    width: 900px;
+    padding: 10px;
+    margin: auto;
+
+}
+
+.select-style {
+    border: 1px solid #ccc;
+    width: 120px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #fafafa url("img/icon-select.png") no-repeat 90% 50%;
+    margin-left: 10px;
+}
+.select-style select {
+    padding: 5px 8px;
+    width: 130%;
+
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    background-image: none;
+    -webkit-appearance: none;
+}
+
+.select-style select:focus {
+    outline: none;
+}
+
+
+.videos{
+  margin-top: 10px;
+  width: 300px;
+}
+
+.listing {
+  display: inline-block;
+  width: 300px;
+}
+
+.line{
+width: 90%;
+height: 47px;
+border-bottom: 2px solid black;
+position: absolute;
+}
+
+/* Create three equal columns that sits next to each other */
