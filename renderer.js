@@ -6,6 +6,8 @@ var fs = require('fs')
 var counterfolder=1;
 var recordingPath = "./Recordings/";
 
+
+
 if (!fs.existsSync(recordingPath))
 {
     fs.mkdirSync(recordingPath);
@@ -15,6 +17,7 @@ var webcamCounter = 0;
 var mediaDeviceInfos = []; //Stores the avaliable media devices
 var mediaObjects = []; //A list of the created media recorders
 var selectedcam = 1;
+
 
 
 //var stopBtn = document.getElementById("stopBtn");
@@ -42,7 +45,8 @@ recordbutton.onclick= recordingbutton ;
 function startRecording(){
 
 //Check input content
-var fileCreationTimestamp = Date.now();
+//var fileCreationTimestamp = convertUTCDateToLocalDate(new Date(date_string_you_received));
+var fileCreationTimestamp = new Date();
  var recordingName = "";
  var inputFolderElement = document.getElementById("foldername");
  if(inputFolderElement && inputFolderElement.value !== "")
@@ -67,6 +71,24 @@ var fileCreationTimestamp = Date.now();
   //stopBtn.disabled = false;
 
   console.log("Recordings started");
+
+
+  //Json file creation and data saving
+
+let  dataset= {  
+    Time: fileCreationTimestamp,
+    Name: recordingName, 
+    Folder_name: inputFolderElement,
+    department: 'English',
+    car: 'Honda' 
+};
+
+let data = JSON.stringify(dataset, null, 2);  
+fs.writeFileSync('dataset1.json', data);
+
+
+
+
 
 }
 //recordBtn.onclick = startRecording;
@@ -115,7 +137,6 @@ function createMediaObject(){
   //Create the element to display and record a video feed
   var videoElement = document.createElement("VIDEO"); //The new Video element
     videoElement.classList.add("videos");
-    videoElement.setAttribute("id", "videoscont");
   videoElement.muted = true; //Mute the video otherwise we get a feedback loop while recording if sound is on
   //Append the media options to the video container
   videoRecorderDiv.appendChild(videoElement);
@@ -331,35 +352,6 @@ function fillMediaRecorderSelectorOptions(videoSelector, audioSelector){
   }
 }
 
-
-var photo = document.getElementById("clickphoto");
-photo.onclick= takepicture;
-var canvascount = 0 ;
-function takepicture()
- {
-for (var i = 0; i !==mediaObjects.length; i++)
-{
-  var canid= 'canvas'+canvascount;
-var videolist = mediaObjects[i].videoElement;
-console.log(mediaObjects[i].videoElement);
-var createcanvas = document.createElement("canvas");
-createcanvas.setAttribute('id', canid);
-var width="240", height="240";
-var createimagebox = document.createElement('img');
-createimagebox.setAttribute('id', 'thumbnail_img');
-createcanvas.appendChild(createimagebox);
-document.getElementById("imagediv").appendChild(createcanvas);
-var canvas = document.getElementById(canid);
-var img = document.getElementById('thumbnail_img');
-canvas.width=width;
-canvas.height=height;
-var context = canvas.getContext('2d');
-console.log(videolist);
-context.drawImage(videolist,0,0,400,300);
-canvascount+=1;
-}
-  }
-
 function recordEventRecievedCallback(args){
   console.log(args);
   if(args[0] === "Recording"){
@@ -379,4 +371,3 @@ config = {
   realm: "realm1"
 };
 wamp.restartWAMP(config, recordEventRecievedCallback);
-
