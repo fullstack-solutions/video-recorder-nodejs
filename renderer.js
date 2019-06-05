@@ -5,7 +5,7 @@
 var fs = require('fs')
 var counterfolder=1;
 var recordingPath = "./Recordings/";
-
+var jsonfile="./"
 if (!fs.existsSync(recordingPath))
 {
     fs.mkdirSync(recordingPath);
@@ -16,7 +16,7 @@ var mediaDeviceInfos = []; //Stores the avaliable media devices
 var mediaObjects = []; //A list of the created media recorders
 var selectedcam = 1;
 
-
+var imageselector = 0 ;
 //var stopBtn = document.getElementById("stopBtn");
 //stopBtn.disabled = true;
   var currentvalue = "";
@@ -49,14 +49,19 @@ var fileCreationTimestamp = Date.now();
  {
    recordingName = inputFolderElement.value + "_";
  }
-
   for(var i = 0; i !== mediaObjects.length; i++){
     mediaObjects[i].outFile = recordingPath+fileCreationTimestamp+'_'+recordingName+"Recording_Webcam_"+webcamCounter;
     console.log(mediaObjects[i]);
     var mediaRecorder = mediaObjects[i].recorder;
     mediaRecorder.start(1000);
     webcamCounter += 1; //Increment the global media recorder counter
+    var  dataset= {
+      table:[]
+    };
 
+    dataset.table.push({fileCreationTimestamp:fileCreationTimestamp, webcamCounter:webcamCounter});
+    var json = JSON.stringify(dataset);
+    fs.writeFileSync(recordingName+"Recording" +'.json', json);
   }
 
   //recordBtn.style.background = "";
@@ -80,7 +85,7 @@ function stopRecording(){
   //recordBtn.style.color = "";
   //recordBtn.disabled = false;
   //recordBtn.innerHTML = "Record";
-
+webcamCounter=0;
   //stopBtn.disabled = true
 }
 //stopBtn.onclick = stopRecording;
@@ -92,8 +97,7 @@ function gotDevices(deviceInfos) {
 navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(
   function(err) {
      console.log('The following getUserMedia error occured: ' + err);
-   }
-);
+   });
 
 function onMediaSourceChanged(ev){
   for(var i = 0; i !== mediaObjects.length; i++){
@@ -102,6 +106,18 @@ function onMediaSourceChanged(ev){
       console.log("Refreshing media after changes");
       //console.log("After changes "+ newcont.deviceId);
       setupMediaRecorder(mediaObjects[i]);
+      break;
+    }
+  }
+}
+
+function onMediaSourceChangeImage(ev){
+  for(var i = 0; i !== mediaObjects.length; i++){
+    if(mediaObjects[i].imageelement === ev.target){
+     //newcont.deviceId = mediaObjects[i].videoSelector.value;
+      console.log("Refreshing media after changes");
+      //console.log("After changes "+ newcont.deviceId);
+      takePhotosetup(mediaObjects[i]);
       break;
     }
   }
@@ -132,7 +148,19 @@ function createMediaObject(){
   audioSourceSelector.addEventListener("change", onMediaSourceChanged.bind(mediaObject));
   mediaOptionsDiv.appendChild(audioSourceSelector);
 
-
+if(imageselector===0)
+{
+  var imageOptionsDiv = document.createElement("DIV");
+  var imagesource = document.createElement("SELECT");
+  imagesource.classList.add("select-style");
+  imagesource.addEventListener("change", onMediaSourceChangeImage.bind(mediaObject));
+  imageOptionsDiv.appendChild(imagesource);
+  document.getElementById("imagediv").appendChild(imageOptionsDiv);
+  fillImageMediaOption(imagesource);
+  mediaObject.imageelement = imagesource;
+  takePhotosetup(mediaObject);
+  imageselector+=1;
+ }
   //Populate the selection options
   fillMediaRecorderSelectorOptions(videoSourceSelector, audioSourceSelector);
 
@@ -144,6 +172,7 @@ function createMediaObject(){
   mediaObject.videoSelector = videoSourceSelector;
   mediaObject.audioSelector = audioSourceSelector;
   mediaObject.recordingNmb = 0;
+
 
   mediaObjects.push(mediaObject);
 
@@ -192,7 +221,6 @@ function setupMediaRecorder(mediaObject){
   audioConstraints.deviceId = mediaObject.audioSelector.options[mediaObject.audioSelector.selectedIndex].value;
   //audioConstraints.encodingBitRate = bitRate;
   //audioConstraints.samplingRate = sampleRate;
-
   navigator.mediaDevices.getUserMedia(
     { video: videoConstraints,
       audio: audioConstraints}).then(function(stream) {
@@ -246,9 +274,10 @@ function setupMediaRecorder(mediaObject){
       recorder.addEventListener("stop", mediaRecorderStopped.bind(event, mediaObject));
 
       //Stream preview
-      mediaObject.videoElement.srcObject = stream;
-      mediaObject.videoElement.load();
-      mediaObject.videoElement.play();
+     mediaObject.videoElement.srcObject = stream;
+     mediaObject.videoElement.load();
+     mediaObject.videoElement.play();
+  //  mediaObject.deviceId=stream;
   });
 }
 
@@ -298,7 +327,7 @@ function allRecordersStopped(){
 function cleanTmpFiles(){
   //Reset the media objects in case we want to start a new recording
   for(var i = 0; i !== mediaObjects.length; i++){
-    mediaObjects[i].videoElement.pause();
+  mediaObjects[i].videoElement.pause();
     mediaObjects[i].stream.end();
 
     fs.unlink(mediaObjects[i].outFile+"_rec"+mediaObjects[i].recordingNmb+".webm", (err) => {
@@ -331,34 +360,74 @@ function fillMediaRecorderSelectorOptions(videoSelector, audioSelector){
   }
 }
 
+function fillImageMediaOption(imagesource){
+
+  for (var i = 0; i !== mediaDeviceInfos.length; ++i) {
+    var deviceInfo = mediaDeviceInfos[i];
+    var option = document.createElement('option');
+    option.value = deviceInfo.deviceId;
+    if (deviceInfo.kind === 'videoinput') {
+      option.text = deviceInfo.label || 'Camera ' +
+        (imagesource.length + 1);
+      imagesource.appendChild(option);
+    }
+  }
+}
 
 var photo = document.getElementById("clickphoto");
-photo.onclick= takepicture;
-var canvascount = 0 ;
-function takepicture()
- {
-for (var i = 0; i !==mediaObjects.length; i++)
+var imageCapture;
+photo.onclick= takePhoto;
+//var canvascount = 0 ;
+function takePhotosetup(mediaObject)
 {
-  var canid= 'canvas'+canvascount;
-var videolist = mediaObjects[i].videoElement;
-console.log(mediaObjects[i].videoElement);
-var createcanvas = document.createElement("canvas");
-createcanvas.setAttribute('id', canid);
-var width="240", height="240";
-var createimagebox = document.createElement('img');
-createimagebox.setAttribute('id', 'thumbnail_img');
-createcanvas.appendChild(createimagebox);
-document.getElementById("imagediv").appendChild(createcanvas);
-var canvas = document.getElementById(canid);
-var img = document.getElementById('thumbnail_img');
-canvas.width=width;
-canvas.height=height;
-var context = canvas.getContext('2d');
-console.log(videolist);
-context.drawImage(videolist,0,0,400,300);
-canvascount+=1;
+var photomedia = {};
+photomedia.deviceId = mediaObject.imageelement.options[mediaObject.imageelement.selectedIndex].value;
+console.log("myname"+photomedia.deviceId);
+navigator.mediaDevices.getUserMedia({video: photomedia
+}).then(function(stream){
+mediaObject.imageelement.srcObject =   stream;
+const track = stream.getVideoTracks()[0];
+ imageCapture = new ImageCapture(track);
+});
 }
-  }
+  function takePhoto() {
+    console.log(imageCapture);
+        imageCapture.takePhoto()
+          .then(blob => {
+            console.log('Photo taken: ' + blob.type + ', ' + blob.size + 'B');
+
+            const image = document.querySelector('img');
+            image.src = URL.createObjectURL(blob);
+          })
+          .catch(err => console.error('takePhoto() failed: ', err));
+      }
+    //commented code of canvas
+ /*for (var i = 0; i !==mediaObjects.length; i++)
+ {
+   var canid= 'canvas'+canvascount;
+ var videolist = mediaObjects[i].videoElement;
+ console.log(mediaObjects[i].videoElement);
+ var createcanvas = document.createElement("canvas");
+ createcanvas.setAttribute('id', canid);
+ var width="400", height="200";
+ var createimagebox = document.createElement('img');
+ createimagebox.setAttribute('id', 'thumbnail_img');
+ createcanvas.appendChild(createimagebox);
+ document.getElementById("imagediv").appendChild(createcanvas);
+ var canvas = document.getElementById(canid);
+ var img = document.getElementById('thumbnail_img');
+ canvas.width=width;
+ canvas.height=height;
+ var context = canvas.getContext('2d');
+ console.log(videolist);
+ context.drawImage(videolist,0,0,600,400);
+ img = canvas.toDataURL("image/png");
+ document.getElementById('thumbnail_img').src= img;
+ canvascount+=1;
+ }*/
+
+
+
 
 function recordEventRecievedCallback(args){
   console.log(args);
